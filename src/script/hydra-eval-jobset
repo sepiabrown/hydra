@@ -374,6 +374,8 @@ sub evalJobs {
     push @cmd, "--constituents";
     push @cmd, "--force-recurse";
     push @cmd, ("--option", "allow-import-from-derivation", "false") if $config->{allow_import_from_derivation} // "true" ne "true";
+    push @cmd, ("--workers", $config->{evaluator_workers} // 1);
+    push @cmd, ("--max-memory-size", $config->{evaluator_max_memory_size} // 4096);
 
     if (defined $ENV{'HYDRA_DEBUG'}) {
         sub escape {
