@@ -371,6 +371,7 @@ sub evalJobs {
     push @cmd, ("--gc-roots-dir", getGCRootsDir);
     push @cmd, ("--max-jobs", 1);
     push @cmd, "--meta";
+    push @cmd, "--constituents";
     push @cmd, "--force-recurse";
     push @cmd, ("--option", "allow-import-from-derivation", "false") if $config->{allow_import_from_derivation} // "true" ne "true";
 
@@ -776,6 +777,8 @@ sub checkJobsetWrapped {
             , nixexprpath => $jobset->nixexprpath
             });
 
+        my @jobsWithConstituents;
+
         while (defined(my $job = $jobsIter->())) {
             if ($jobsetsJobset) {
                 die "The .jobsets jobset must only have a single job named 'jobsets'"
@@ -788,6 +791,10 @@ sub checkJobsetWrapped {
 
             checkBuild($db, $jobset, $ev, $inputInfo, $job, \%buildMap, $prevEval, $jobOutPathMap, $plugins)
                 unless defined $job->{error};
+
+            if (defined $job->{constituents}) {
+                push @jobsWithConstituents, $job;
+            }
         }
 
         # Have any builds been added or removed since last time?
@@ -819,28 +826,26 @@ sub checkJobsetWrapped {
                 my $x = $buildMap{$id};
                 my $y = $drvPathToId{$x->{drvPath}};
                 if (defined $y) {
-                    next if length $x->{jobName} > length $y->{jobName};
-                    next if length $x->{jobName} == length $y->{jobName} && $x->{jobName} ge $y->{jobName};
+                    next if length $x->{attr} > length $y->{attr};
+                    next if length $x->{attr} == length $y->{attr} && $x->{attr} ge $y->{attr};
                 }
                 $drvPathToId{$x->{drvPath}} = $x;
             }
 
-            # XXX: dead code with nix-eval-jobs. To be removed.
-            foreach my $job (values @jobs) {
-                next unless $job->{constituents};
-
+            foreach my $job (values @jobsWithConstituents) {
+                next unless defined $job->{constituents};
                 if (defined $job->{error}) {
-                    die "aggregate job ‘$job->{jobName}’ failed with the error: $job->{error}\n";
+                    die "aggregate job ‘$job->{attr}’ failed with the error: $job->{error}\n";
                 }
 
                 my $x = $drvPathToId{$job->{drvPath}} or
-                    die "aggregate job ‘$job->{jobName}’ has no corresponding build record.\n";
+                    die "aggregate job ‘$job->{attr}’ has no corresponding build record.\n";
                 foreach my $drvPath (@{$job->{constituents}}) {
                     my $constituent = $drvPathToId{$drvPath};
                     if (defined $constituent) {
                         $db->resultset('AggregateConstituents')->update_or_create({aggregate => $x->{id}, constituent => $constituent->{id}});
                     } else {
-                        warn "aggregate job ‘$job->{jobName}’ has a constituent ‘$drvPath’ that doesn't correspond to a Hydra build\n";
+                        warn "aggregate job ‘$job->{attr}’ has a constituent ‘$drvPath’ that doesn't correspond to a Hydra build\n";
                     }
                 }
             }
