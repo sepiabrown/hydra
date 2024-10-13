@@ -8,7 +8,7 @@
   inputs.nix.inputs.nixpkgs.follows = "nixpkgs";
   inputs.nix.inputs.libgit2.follows = "libgit2";
 
-  inputs.nix-eval-jobs.url = "github:nix-community/nix-eval-jobs";
+  inputs.nix-eval-jobs.url = "github:Ericson2314/nix-eval-jobs/aggregate-jobs";
   inputs.nix-eval-jobs.inputs.nixpkgs.follows = "nixpkgs";
 
   # hide nix dev tooling from our lock file

@@ -77,15 +77,16 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1731682758,
-        "narHash": "sha256-o54e8oNPPNmU7zHm3uTvsbbQLi7EKX3S6EEndXFG594=",
-        "owner": "nix-community",
+        "lastModified": 1732550783,
+        "narHash": "sha256-HvIOV9Gf82Sc+WaQy7Wi9h8d5LXDkGwhbRUOmvGfEZM=",
+        "owner": "Ericson2314",
         "repo": "nix-eval-jobs",
-        "rev": "d926bcd5206c0b7afe47bed92557c8cd5e882b36",
+        "rev": "bd5e93d30f87c936199af31d2448eb57b2357d57",
         "type": "github"
       },
       "original": {
-        "owner": "nix-community",
+        "owner": "Ericson2314",
+        "ref": "aggregate-jobs",
         "repo": "nix-eval-jobs",
         "type": "github"
       }
