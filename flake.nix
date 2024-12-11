@@ -32,32 +32,32 @@
       };
 
       hydraJobs = {
-        build = forEachSystem (system: packages.${system}.hydra);
+        # build = forEachSystem (system: packages.${system}.hydra);
 
-        buildNoTests = forEachSystem (system:
-          packages.${system}.hydra.overrideAttrs (_: {
-            doCheck = false;
-          })
-        );
+        # buildNoTests = forEachSystem (system:
+        #   packages.${system}.hydra.overrideAttrs (_: {
+        #     doCheck = false;
+        #   })
+        # );
 
-        manual = forEachSystem (system: let
-          pkgs = nixpkgs.legacyPackages.${system};
-          hydra = self.packages.${pkgs.hostPlatform.system}.hydra;
-        in
-          pkgs.runCommand "hydra-manual-${hydra.version}" { }
-            ''
-              mkdir -p $out/share
-              cp -prvd ${hydra.doc}/share/doc $out/share/
+        # manual = forEachSystem (system: let
+        #   pkgs = nixpkgs.legacyPackages.${system};
+        #   hydra = self.packages.${pkgs.hostPlatform.system}.hydra;
+        # in
+        #   pkgs.runCommand "hydra-manual-${hydra.version}" { }
+        #     ''
+        #       mkdir -p $out/share
+        #       cp -prvd ${hydra.doc}/share/doc $out/share/
 
-              mkdir $out/nix-support
-              echo "doc manual $out/share/doc/hydra" >> $out/nix-support/hydra-build-products
-            '');
+        #       mkdir $out/nix-support
+        #       echo "doc manual $out/share/doc/hydra" >> $out/nix-support/hydra-build-products
+        #     '');
 
         tests = import ./nixos-tests.nix {
           inherit forEachSystem nixpkgs nixosModules;
         };
 
-        container = nixosConfigurations.container.config.system.build.toplevel;
+        # container = nixosConfigurations.container.config.system.build.toplevel;
       };
 
       checks = forEachSystem (system: {
