@@ -42,63 +42,63 @@ in
         '';
     });
 
-  # notifications = forEachSystem (system:
-  #   with import (nixpkgs + "/nixos/lib/testing-python.nix") { inherit system; };
-  #   simpleTest {
-  #     name = "hydra-notifications";
-  #     nodes.machine = {
-  #       imports = [ hydraServer ];
-  #       services.hydra-dev.extraConfig = ''
-  #         <influxdb>
-  #           url = http://127.0.0.1:8086
-  #           db = hydra
-  #         </influxdb>
-  #       '';
-  #       services.influxdb.enable = true;
-  #     };
-  #     testScript = ''
-  #       machine.wait_for_job("hydra-init")
+  notifications = forEachSystem (system:
+    with import (nixpkgs + "/nixos/lib/testing-python.nix") { inherit system; };
+    pkgs.testers.runNixOSTest {
+      name = "hydra-notifications";
+      nodes.machine = {
+        imports = [ hydraServer ];
+        services.hydra-dev.extraConfig = ''
+          <influxdb>
+            url = http://127.0.0.1:8086
+            db = hydra
+          </influxdb>
+        '';
+        services.influxdb.enable = true;
+      };
+      testScript = { nodes, ... }: ''
+        machine.wait_for_job("hydra-init")
 
-  #       # Create an admin account and some other state.
-  #       machine.succeed(
-  #           """
-  #               su - hydra -c "hydra-create-user root --email-address 'alice@example.org' --password foobar --role admin"
-  #               mkdir /run/jobset
-  #               chmod 755 /run/jobset
-  #               cp ${./t/jobs/api-test.nix} /run/jobset/default.nix
-  #               chmod 644 /run/jobset/default.nix
-  #               chown -R hydra /run/jobset
-  #       """
-  #       )
+        # Create an admin account and some other state.
+        machine.succeed(
+            """
+                su - hydra -c "hydra-create-user root --email-address 'alice@example.org' --password foobar --role admin"
+                mkdir /run/jobset
+                chmod 755 /run/jobset
+                cp ${./t/jobs/api-test.nix} /run/jobset/default.nix
+                chmod 644 /run/jobset/default.nix
+                chown -R hydra /run/jobset
+        """
+        )
 
-  #       # Wait until InfluxDB can receive web requests
-  #       machine.wait_for_job("influxdb")
-  #       machine.wait_for_open_port(8086)
+        # Wait until InfluxDB can receive web requests
+        machine.wait_for_job("influxdb")
+        machine.wait_for_open_port(8086)
 
-  #       # Create an InfluxDB database where hydra will write to
-  #       machine.succeed(
-  #           "curl -XPOST 'http://127.0.0.1:8086/query' "
-  #           + "--data-urlencode 'q=CREATE DATABASE hydra'"
-  #       )
+        # Create an InfluxDB database where hydra will write to
+        machine.succeed(
+            "curl -XPOST 'http://127.0.0.1:8086/query' "
+            + "--data-urlencode 'q=CREATE DATABASE hydra'"
+        )
 
-  #       # Wait until hydra-server can receive HTTP requests
-  #       machine.wait_for_job("hydra-server")
-  #       machine.wait_for_open_port(3000)
+        # Wait until hydra-server can receive HTTP requests
+        machine.wait_for_job("hydra-server")
+        machine.wait_for_open_port(3000)
 
-  #       # Setup the project and jobset
-  #       machine.succeed(
-  #           "su - hydra -c 'perl -I ${config.services.hydra-dev.package.perlDeps}/lib/perl5/site_perl ${./t/setup-notifications-jobset.pl}' >&2"
-  #       )
+        # Setup the project and jobset
+        machine.succeed(
+            "su - hydra -c 'perl -I ${nodes.machine.config.services.hydra-dev.package.perlDeps}/lib/perl5/site_perl ${./t/setup-notifications-jobset.pl}' >&2"
+        )
 
-  #       # Wait until hydra has build the job and
-  #       # the InfluxDBNotification plugin uploaded its notification to InfluxDB
-  #       machine.wait_until_succeeds(
-  #           "curl -s -H 'Accept: application/csv' "
-  #           + "-G 'http://127.0.0.1:8086/query?db=hydra' "
-  #           + "--data-urlencode 'q=SELECT * FROM hydra_build_status' | grep success"
-  #       )
-  #     '';
-  #   });
+        # Wait until hydra has build the job and
+        # the InfluxDBNotification plugin uploaded its notification to InfluxDB
+        machine.wait_until_succeeds(
+            "curl -s -H 'Accept: application/csv' "
+            + "-G 'http://127.0.0.1:8086/query?db=hydra' "
+            + "--data-urlencode 'q=SELECT * FROM hydra_build_status' | grep success"
+        )
+      '';
+    });
 
   # gitea = forEachSystem (system:
   #   let pkgs = nixpkgs.legacyPackages.${system}; in
