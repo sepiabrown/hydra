@@ -80,23 +80,49 @@
         inherit self;
       };
 
-      nixosConfigurations.container = nixpkgs.lib.nixosSystem {
+      nixosConfigurations.container = nixpkgs.lib.nixosSystem rec {
         system = "x86_64-linux";
         modules =
           [
             self.nixosModules.hydra
             self.nixosModules.hydraTest
             self.nixosModules.hydraProxy
+            ({ config, ... }:
             {
               system.configurationRevision = self.lastModifiedDate;
 
               boot.isContainer = true;
-              networking.useDHCP = false;
-              networking.firewall.allowedTCPPorts = [ 80 ];
-              networking.hostName = "hydra";
+              networking = {
+                hostName = "hydra";
+                useDHCP = false;
+                firewall = {
+                  enable = true;
+                  allowedTCPPorts = [ 80 3000 ];  # Adjust as needed
+                };
+                useHostResolvConf = false;
+              };
+
+              services.resolved.enable = true;
+
+              environment.systemPackages = [
+                nixpkgs.legacyPackages.x86_64-linux.vim
+                nixpkgs.legacyPackages.x86_64-linux.git
+              ];
+              nix.settings = {
+                experimental-features = "nix-command flakes";
+                allowed-uris = "github: https:";
+              };
+
+              users.users.hydra-queue-runner = {
+                uid = config.ids.uids.hydra-queue-runner;
+              };
+
+              users.groups.hydra = {
+                gid = config.ids.gids.hydra;
+              };
 
               services.hydra-dev.useSubstitutes = true;
-            }
+            })
           ];
       };
 

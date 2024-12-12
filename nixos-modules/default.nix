@@ -21,9 +21,9 @@
     #   [error] Caught exception in engine "Cannot determine local time zone"
     time.timeZone = "UTC";
 
-    nix.extraOptions = ''
-      allowed-uris = https://github.com/
-    '';
+    # nix.extraOptions = ''
+    #   allowed-uris = https://github.com/
+    # '';
   };
 
   hydraProxy = {
