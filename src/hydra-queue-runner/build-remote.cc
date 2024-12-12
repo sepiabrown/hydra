@@ -197,7 +197,7 @@ static BasicDerivation sendInputs(
         mc1.reset();
         MaintainCount<counter> mc2(nrStepsCopyingTo);
 
-        printMsg(lvlDebug, "sending closure of ‘%s’ to ‘%s’",
+        printMsg(lvlInfo, "sending closure of ‘%s’ to ‘%s’",
             localStore.printStorePath(step.drvPath), conn.machine->sshName);
 
         auto now1 = std::chrono::steady_clock::now();
@@ -228,6 +228,8 @@ static BuildResult performBuild(
     counter & nrStepsBuilding
 )
 {
+    printMsg(lvlInfo, "---------------------10");
+
     conn.putBuildDerivationRequest(localStore, drvPath, drv, options);
 
     BuildResult result;
@@ -275,6 +277,7 @@ static BuildResult performBuild(
         }
     }
 
+    printMsg(lvlInfo, "---------------------11");
     return result;
 }
 
@@ -420,6 +423,7 @@ void State::buildRemote(ref<Store> destStore,
     std::function<void(StepState)> updateStep,
     NarMemberDatas & narMembers)
 {
+    printMsg(lvlInfo, "---------------------0");
     assert(BuildResult::TimedOut == 8);
 
     auto [logFile, logFD] = build_remote::openLogFile(logDir, step->drvPath);
@@ -438,6 +442,19 @@ void State::buildRemote(ref<Store> destStore,
             false, // no compression yet
             logFD.get(),
         };
+
+        printMsg(
+            lvlInfo,
+            "sshName: ‘%s’, sshKey: ‘%s’, sshPublicHostKey: ‘%s’, isLocalhost: ‘%s’",
+            machine->sshName.c_str(),
+            machine->sshKey.c_str(),
+            machine->sshPublicHostKey.c_str(),
+            machine->isLocalhost() ? "true" : "false"
+        );
+
+        Strings command_ = {"touch", "/test/touch-test"};
+
+        auto ret_ = master.startCommand(std::move(command_), { });
 
         // FIXME: rewrite to use Store.
         auto child = build_remote::openConnection(machine, master);
@@ -600,6 +617,7 @@ void State::buildRemote(ref<Store> destStore,
         child->in = -1;
         child->sshPid.wait();
 
+        printMsg(lvlInfo, "---------------------1");
     } catch (Error & e) {
         /* Disable this machine until a certain period of time has
            passed. This period increases on every consecutive
